@@ -3,147 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Search V1</title>
+    <title>AnimeKai Viewer - Consumet API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body {
-            background-color: #050505;
-            color: #e0e0e0;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-        
-        /* Título arriba, libre del contenedor oscuro */
-        .app-header {
-            text-align: center;
-            margin-top: 10px;
-            margin-bottom: 35px;
-        }
-        .app-header h1 {
-            color: #b026ff;
-            text-shadow: 0 0 15px rgba(176, 38, 255, 0.5);
-            font-size: 2.5rem;
-            margin: 0;
-            letter-spacing: 2px;
-        }
-
-        /* Contenedor principal de la app */
-        .main-container {
-            background-color: #121212;
-            border-radius: 8px;
-            padding: 25px;
-            max-width: 600px;
-            margin: 0 auto;
-            border: 1px solid #2a2a2a;
-        }
-
-        /* Elementos minimalistas */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-        input {
-            flex: 1;
-            background: #000;
-            border: 1px solid #333;
-            color: #fff;
-            padding: 12px;
-            border-radius: 4px;
-            outline: none;
-        }
-        input:focus {
-            border-color: #b026ff;
-        }
-        button {
-            background: transparent;
-            border: 1px solid #b026ff;
-            color: #b026ff;
-            padding: 12px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-        button:hover {
-            background: #b026ff;
-            color: #000;
-            box-shadow: 0 0 10px #b026ff;
-        }
-
-        /* Grilla de resultados horizontal */
-        .results {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 15px;
-        }
-        .anime-card {
-            text-align: center;
-        }
-        .anime-card img {
-            width: 100%;
-            border-radius: 6px;
-        }
-        .anime-title {
-            font-size: 0.85rem;
-            margin-top: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #aaa;
-        }
+        body { font-family: system-ui, sans-serif; }
+        .anime-card { transition: all 0.3s; }
+        .anime-card:hover { transform: scale(1.05); box-shadow: 0 10px 15px rgba(0,0,0,0.3); }
+        video { max-height: 70vh; }
     </style>
 </head>
-<body>
-
-    <div class="app-header">
-        <h1>AnimeSearch V1</h1>
-    </div>
-
-    <div class="main-container">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Buscar anime (ej. Jujutsu)...">
-            <button onclick="searchAnime()">Buscar</button>
+<body class="bg-zinc-950 text-white">
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-red-500">AnimeKai</h1>
+                <p class="text-zinc-400">Buscador con Consumet API</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-green-400">● API en vivo</span>
+            </div>
         </div>
-        <div id="resultsContainer" class="results"></div>
+
+        <!-- Search -->
+        <div class="mb-8">
+            <div class="flex gap-2">
+                <input type="text" id="searchInput" 
+                       class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-5 py-4 text-lg focus:outline-none focus:border-red-500"
+                       placeholder="Buscar anime... (ej: naruto, one piece)">
+                <button onclick="searchAnime()" 
+                        class="bg-red-600 hover:bg-red-700 px-8 rounded-xl font-semibold">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div id="results" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
+
+        <!-- Detail Modal -->
+        <div id="modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+            <div class="bg-zinc-900 rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden">
+                <div class="flex justify-between items-center p-6 border-b border-zinc-700">
+                    <h2 id="modalTitle" class="text-2xl font-bold"></h2>
+                    <button onclick="closeModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+                </div>
+                
+                <div class="p-6 overflow-auto max-h-[80vh]">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <!-- Poster -->
+                        <img id="modalImage" class="w-full md:w-72 rounded-xl" alt="poster">
+                        
+                        <!-- Info -->
+                        <div class="flex-1">
+                            <p id="modalDesc" class="text-zinc-300 mb-4"></p>
+                            <div id="modalGenres" class="flex flex-wrap gap-2 mb-4"></div>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div><span class="text-zinc-400">Estado:</span> <span id="modalStatus"></span></div>
+                                <div><span class="text-zinc-400">Tipo:</span> <span id="modalType"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Episodes -->
+                    <h3 class="text-xl font-semibold mt-8 mb-4">Episodios</h3>
+                    <div id="episodesList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-96 overflow-auto pr-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Player Modal -->
+        <div id="playerModal" class="hidden fixed inset-0 bg-black flex items-center justify-center z-[60] p-4">
+            <div class="w-full max-w-5xl">
+                <div class="flex justify-between mb-3">
+                    <h3 id="playerTitle" class="text-xl"></h3>
+                    <button onclick="closePlayer()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+                </div>
+                <video id="videoPlayer" controls class="w-full bg-black rounded-xl" autoplay></video>
+                <div class="mt-4 text-xs text-zinc-500 flex gap-4">
+                    <div>Servidor: <span id="serverInfo" class="text-white"></span></div>
+                    <a id="downloadLink" href="#" target="_blank" class="text-red-400 hover:underline">⬇ Descargar</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-<script>
-        // Usamos Jikan API. Es pública, gratuita y NUNCA te dará error de CORS.
-        const API_URL = 'https://api.jikan.moe/v4/anime?q=';
+    <script>
+        const API_BASE = "https://api.consumet.org/anime/animekai";
 
         async function searchAnime() {
-            const query = document.getElementById('searchInput').value;
-            if (!query) return;
+            const query = document.getElementById("searchInput").value.trim();
+            if (!query) return alert("Escribe algo para buscar");
 
-            const container = document.getElementById('resultsContainer');
-            container.innerHTML = '<p style="color: #b026ff; text-align: center;">Buscando en la base de datos...</p>';
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = `<p class="col-span-full text-center py-12 text-zinc-400">Buscando...</p>`;
 
             try {
-                const response = await fetch(API_URL + query);
-                const data = await response.json();
-                
-                container.innerHTML = ''; 
-                
-                // Jikan devuelve el array de animes dentro de "data.data"
-                if(!data.data || data.data.length === 0) {
-                    container.innerHTML = '<p style="color: #aaa;">No se encontraron resultados.</p>';
-                    return;
-                }
+                const res = await fetch(`${API_BASE}/${encodeURIComponent(query)}?page=1`);
+                const data = await res.json();
 
-                data.data.forEach(anime => {
-                    const card = document.createElement('div');
-                    card.className = 'anime-card';
-                    card.innerHTML = `
-                        <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
-                        <div class="anime-title">${anime.title}</div>
-                    `;
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                container.innerHTML = `<p style="color: #ff3366; text-align: center;">Error de conexión: ${error.message}</p>`;
+                resultsDiv.innerHTML = "";
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(anime => {
+                        const card = document.createElement("div");
+                        card.className = "anime-card bg-zinc-900 rounded-xl overflow-hidden cursor-pointer";
+                        card.innerHTML = `
+                            <img src="${anime.image}" class="w-full h-64 object-cover" alt="${anime.title}">
+                            <div class="p-4">
+                                <h3 class="font-semibold line-clamp-2">${anime.title}</h3>
+                                <p class="text-xs text-zinc-500 mt-1">${anime.releaseDate || ''} • ${anime.subOrDub}</p>
+                            </div>
+                        `;
+                        card.onclick = () => showDetails(anime.id);
+                        resultsDiv.appendChild(card);
+                    });
+                } else {
+                    resultsDiv.innerHTML = `<p class="col-span-full text-center py-12 text-zinc-400">No se encontraron resultados</p>`;
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = `<p class="col-span-full text-center py-12 text-red-400">Error al conectar con la API</p>`;
+                console.error(e);
             }
         }
+
+        async function showDetails(id) {
+            try {
+                const res = await fetch(`${API_BASE}/info?id=${id}`);
+                const data = await res.json();
+
+                document.getElementById("modalTitle").textContent = data.title;
+                document.getElementById("modalImage").src = data.image;
+                document.getElementById("modalDesc").textContent = data.description || "Sin descripción";
+                document.getElementById("modalStatus").textContent = data.status;
+                document.getElementById("modalType").textContent = data.type;
+
+                // Genres
+                const genresDiv = document.getElementById("modalGenres");
+                genresDiv.innerHTML = data.genres ? data.genres.map(g => 
+                    `<span class="bg-zinc-800 px-3 py-1 rounded-full text-xs">${g}</span>`
+                ).join("") : "";
+
+                // Episodes
+                const episodesDiv = document.getElementById("episodesList");
+                episodesDiv.innerHTML = "";
+
+                if (data.episodes && data.episodes.length > 0) {
+                    data.episodes.forEach(ep => {
+                        const btn = document.createElement("button");
+                        btn.className = "bg-zinc-800 hover:bg-red-600 p-4 rounded-xl text-left transition-colors";
+                        btn.innerHTML = `
+                            <div class="font-mono text-red-400">Ep ${ep.number}</div>
+                            <div class="text-sm mt-1 line-clamp-1">${ep.title || 'Episodio ' + ep.number}</div>
+                        `;
+                        btn.onclick = () => watchEpisode(ep.id, data.title + ` - Ep ${ep.number}`);
+                        episodesDiv.appendChild(btn);
+                    });
+                } else {
+                    episodesDiv.innerHTML = `<p class="col-span-full text-zinc-400">No hay episodios disponibles</p>`;
+                }
+
+                document.getElementById("modal").classList.remove("hidden");
+            } catch (e) {
+                alert("Error cargando detalles");
+                console.error(e);
+            }
+        }
+
+        async function watchEpisode(episodeId, title) {
+            closeModal();
+            try {
+                const res = await fetch(`${API_BASE}/watch/${episodeId}?server=vidstreaming`);
+                const data = await res.json();
+
+                const player = document.getElementById("videoPlayer");
+                const playerModal = document.getElementById("playerModal");
+                const playerTitle = document.getElementById("playerTitle");
+
+                playerTitle.textContent = title;
+                document.getElementById("serverInfo").textContent = "vidstreaming";
+
+                if (data.sources && data.sources.length > 0) {
+                    // Tomar la fuente más alta calidad
+                    const source = data.sources.find(s => s.quality === "1080p") || 
+                                  data.sources.find(s => s.quality === "720p") || 
+                                  data.sources[0];
+                    
+                    player.src = source.url;
+                    player.type = source.isM3U8 ? "application/x-mpegURL" : "video/mp4";
+                }
+
+                if (data.download) {
+                    document.getElementById("downloadLink").href = data.download;
+                }
+
+                playerModal.classList.remove("hidden");
+                player.play().catch(() => {});
+            } catch (e) {
+                alert("Error obteniendo link de video. La API puede estar inestable.");
+                console.error(e);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("modal").classList.add("hidden");
+        }
+
+        function closePlayer() {
+            const player = document.getElementById("videoPlayer");
+            player.pause();
+            document.getElementById("playerModal").classList.add("hidden");
+        }
+
+        // Buscar con Enter
+        document.getElementById("searchInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") searchAnime();
+        });
+
+        // Demo inicial
+        window.onload = () => {
+            document.getElementById("searchInput").value = "naruto";
+            // searchAnime(); // descomenta si quieres búsqueda automática al cargar
+        };
     </script>
 </body>
 </html>
