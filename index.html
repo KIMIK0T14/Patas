@@ -108,11 +108,10 @@
         <div id="resultsContainer" class="results"></div>
     </div>
 
-    <script>
-        // Usamos la API pública de Consumet apuntando al proveedor AnimeFLV
-        // Usamos un proxy de AllOrigins para saltarnos el bloqueo CORS
-const BASE_API = encodeURIComponent('https://api.consumet.org/anime/animeflv/');
-const API_URL = `https://api.allorigins.win/raw?url=${BASE_API}`;
+<script>
+        // Usamos Jikan API. Es pública, gratuita y NUNCA te dará error de CORS.
+        const API_URL = 'https://api.jikan.moe/v4/anime?q=';
+
         async function searchAnime() {
             const query = document.getElementById('searchInput').value;
             if (!query) return;
@@ -126,22 +125,23 @@ const API_URL = `https://api.allorigins.win/raw?url=${BASE_API}`;
                 
                 container.innerHTML = ''; 
                 
-                if(data.results.length === 0) {
+                // Jikan devuelve el array de animes dentro de "data.data"
+                if(!data.data || data.data.length === 0) {
                     container.innerHTML = '<p style="color: #aaa;">No se encontraron resultados.</p>';
                     return;
                 }
 
-                data.results.forEach(anime => {
+                data.data.forEach(anime => {
                     const card = document.createElement('div');
                     card.className = 'anime-card';
                     card.innerHTML = `
-                        <img src="${anime.image}" alt="${anime.title}">
+                        <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
                         <div class="anime-title">${anime.title}</div>
                     `;
                     container.appendChild(card);
                 });
             } catch (error) {
-                container.innerHTML = '<p style="color: #ff3366; text-align: center;">Error: La8 API pública está saturada o bloqueando la conexión. Necesitarás tu propio proxy.</p>';
+                container.innerHTML = `<p style="color: #ff3366; text-align: center;">Error de conexión: ${error.message}</p>`;
             }
         }
     </script>
