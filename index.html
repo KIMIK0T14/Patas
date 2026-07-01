@@ -110,8 +110,9 @@
 
     <script>
         // Usamos la API pública de Consumet apuntando al proveedor AnimeFLV
-        const API_URL = 'https://api.consumet.org/anime/animeflv/';
-
+        // Usamos un proxy de AllOrigins para saltarnos el bloqueo CORS
+const BASE_API = encodeURIComponent('https://api.consumet.org/anime/animeflv/');
+const API_URL = `https://api.allorigins.win/raw?url=${BASE_API}`;
         async function searchAnime() {
             const query = document.getElementById('searchInput').value;
             if (!query) return;
